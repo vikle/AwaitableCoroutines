@@ -1,0 +1,24 @@
+{
+  "name": "com.vikle.awaitable-coroutines",
+  "displayName": "Awaitable Coroutines",
+   "description": "Coroutines with await in async methots.",
+  "version": "1.0.0",
+  "unity": "2019.4", 
+  "license": "MIT",
+  "repository": {
+    "url": "https://github.com/vikle/AwaitableCoroutines.git",
+	"type": "git"
+  },
+  "author": {
+    "name": "vikle",
+    "email": "",
+    "url": "https://github.com/vikle"
+  },
+  "keywords": [
+    "unity",
+	"awaitable"
+    "coroutine",
+	"async",
+	"await"
+  ]
+}
