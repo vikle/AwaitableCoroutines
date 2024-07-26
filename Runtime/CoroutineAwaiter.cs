@@ -7,11 +7,19 @@ namespace AwaitableCoroutines
 {
     public sealed class CoroutineAwaiter : ICriticalNotifyCompletion
     {
-        public IEnumerator Coroutine { [MethodImpl(MethodImplOptions.AggressiveInlining)]get; }
-        public YieldInstruction Instruction { [MethodImpl(MethodImplOptions.AggressiveInlining)]get; }
+        public IEnumerator Coroutine
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]get;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]private set;
+        }
 
-        readonly CoroutineAwaiterEnumerator m_controller;
-        
+        public YieldInstruction Instruction
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]get;
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]private set;
+        }
+
+        CoroutineAwaiterEnumerator m_controller;
         Action m_continuation;
         bool m_isCompleted;
 
@@ -23,27 +31,29 @@ namespace AwaitableCoroutines
                 m_isCompleted = value;
                 if (value == false) return;
                 m_continuation?.Invoke();
-                m_continuation = null;
+                Dispose();
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private CoroutineAwaiter()
-        {
-            m_controller = new CoroutineAwaiterEnumerator(this);
-            AwaitableCoroutineRunner.StartExternalCoroutine(m_controller);
-        }
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public CoroutineAwaiter(IEnumerator enumerator) : this()
+        public void Init(IEnumerator enumerator)
         {
             Coroutine = enumerator;
+            Init();
         }
         
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public CoroutineAwaiter(YieldInstruction instruction) : this()
+        public void Init(YieldInstruction instruction)
         {
             Instruction = instruction;
+            Init();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Init()
+        {
+            m_controller = CoroutineAwaiterEnumeratorFactory.Get(this);
+            AwaitableCoroutineRunner.StartExternalCoroutine(m_controller);
         }
         
         public void OnCompleted(Action continuation)
@@ -61,18 +71,20 @@ namespace AwaitableCoroutines
         {
             return m_controller.Current;
         }
-    };
-    
-    public static class CoroutineAwaiterExtensions
-    {
-        public static CoroutineAwaiter GetAwaiter(this IEnumerator coroutine)
-        {
-            return new CoroutineAwaiter(coroutine);
-        }
 
-        public static CoroutineAwaiter GetAwaiter(this YieldInstruction instruction)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void Dispose()
         {
-            return new CoroutineAwaiter(instruction);
+            CoroutineAwaiterFactory.Release(this);
+            
+            m_isCompleted = false;
+
+            Coroutine = null;
+            Instruction = null;
+            m_continuation = null;
+
+            m_controller.Dispose();
+            m_controller = null;
         }
     };
 }
