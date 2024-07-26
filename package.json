@@ -16,7 +16,7 @@
   },
   "keywords": [
     "unity",
-	"awaitable"
+	"awaitable",
     "coroutine",
 	"async",
 	"await"
